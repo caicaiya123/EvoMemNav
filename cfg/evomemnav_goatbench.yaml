@@ -1,0 +1,123 @@
+# EvoMemNav on GOAT-Bench (validation unseen).
+# Values marked [S2] are listed in Table S2 of the supplementary file.
+
+seed: 77
+exp_name: evomemnav_goatbench
+output_parent_dir: results
+
+data:
+  scene_data_path: data/hm3d_v0.2
+  scene_dataset_config_path: data/hm3d_annotated_basis.scene_dataset_config.json
+  goatbench_dir: data/goat_bench/val_unseen/content
+  object_classes_path: data/scannet200_classes.txt
+
+vlm:  # Qwen3-VL behind an OpenAI-compatible server (e.g. vLLM)
+  base_url: http://127.0.0.1:8000/v1
+  api_key_env: OPENAI_API_KEY  # environment variable holding the key ("EMPTY" if unset)
+  model: Qwen3-VL-8B-Instruct
+  temperature: 0.7
+  max_tokens: 4096
+  seed: 77
+  max_retries: 5
+
+camera:
+  height_m: 1.5  # [S2]
+  tilt_deg: -30  # [S2]
+  hfov_deg: 120  # [S2]
+  img_width: 1280
+  img_height: 1280
+
+observation:
+  first_step_extra_views: 6  # views around the agent at the first step of a subtask
+  first_step_view_angle_deg: 40
+  extra_views: 2  # views around the agent at the other steps
+  view_angle_deg: 60
+  neighbor_view_angle_deg: 30  # neighboring views for goal verification
+  vlm_image_size: 360  # [S2]
+
+perception:
+  yolo_model: yolov8x-world.pt
+  sam_model: sam_l.pt
+  clip_model: ViT-B-32
+  clip_pretrained: laion2b_s34b_b79k
+  concept_graph_config: cfg/concept_graph.yaml
+  min_detection: 1
+  object_visibility_dist_m: 3.5  # [S2]
+
+mapping:
+  tsdf_grid_size: 0.1
+  explored_depth: 1.7
+  margin_w_ratio: 0.25
+  margin_h_ratio: 0.6
+  init_clearance: 0.3
+
+planner:
+  eps: 1
+  frontier_step_m: 1
+  anchor_step_m: 1
+  final_observe_distance: 1.5
+  surrounding_explored_radius: 0.7
+  frontier_edge_area_min: 4
+  frontier_edge_area_max: 6
+  frontier_area_min: 8
+  frontier_area_max: 9
+  min_frontier_area: 20
+  max_frontier_angle_range_deg: 150
+  region_equal_threshold: 0.95
+  max_step_room_size_ratio: 2  # step budget = max(min_steps, ratio * sqrt(navigable area))
+  min_steps: 30
+
+vsmgraph:
+  room_vocab:  # [S2] 15 room types
+    - living room
+    - dining room
+    - kitchen
+    - bathroom
+    - bedroom
+    - dressing room
+    - combined kitchen and living room
+    - entryway
+    - basement
+    - laundry room
+    - office
+    - empty room
+    - hallway
+    - closet
+    - unknown
+
+coarse:
+  anchor_budget: 5  # K_A [S2]
+  frontier_budget: 3  # K_F [S2]
+  room_hints:
+    enable: true
+    topk_rooms: 3  # [S2]
+    topk_categories: 8  # [S2]
+  frontier_weights:  # frontier ranking by unexplored region size and path distance
+    gain: 0.30
+    distance: 0.25
+
+selection:
+  include_egocentric_view: true
+  max_crops_per_anchor: 6  # local evidence hints per anchor view
+  max_crops_per_class: 2
+  max_retries: 3
+
+fine:
+  verify_threshold: 0.62  # tau [S2]
+  max_rejections: 3  # rejections per subtask before the fallback [S2]
+  fallback_steps: 10  # duration of the frontier-only fallback
+
+experience:
+  suppression_steps: 10  # [S2] rejected anchor views are suppressed for this many steps
+  ema_alpha: 0.25  # moving-average rate of the frontier scores
+  dead_end_gain_m2: 2.0  # a frontier leg with less newly explored area is a dead end
+  ltm:
+    cell_size_m: 0.5  # grid cell of the node key
+    decay: 0.9  # per-subtask decay of the counts
+    min_support: 0.3  # records with less (decayed) support are removed
+    contradiction_count: 2  # anchor records with at least this many acceptances and rejections are removed
+    max_records_per_goal: 200
+    fallback_min_records: 1  # fall back from L1 to L2 to L3 when a goal key has fewer records
+
+evaluation:
+  success_distance: 1.0  # [S2]

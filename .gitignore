@@ -1,0 +1,18 @@
+# outputs and checkpoints
+results/
+*.pt
+*.pth
+
+# datasets (see README)
+data/hm3d_v0.2/
+data/goat_bench/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# editors and OS
+.idea/
+.vscode/
+.DS_Store

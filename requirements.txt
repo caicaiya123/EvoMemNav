@@ -1,0 +1,21 @@
+# habitat-sim and pytorch3d are installed separately (see README).
+torch
+torchvision
+numpy
+scipy
+scikit-image
+scikit-learn
+numba
+numpy-quaternion
+matplotlib
+pillow
+omegaconf
+openai
+open_clip_torch
+ultralytics
+supervision
+open3d
+opencv-python
+faiss-cpu
+HiPart
+treelib
